@@ -3,6 +3,9 @@
 .swiftpm/
 Package.resolved
 
+# パッケージ化の成果物（再生成可能）
+build/
+
 # Xcode
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
