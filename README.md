@@ -1,31 +1,33 @@
 # TabFiler
 
-macOS 向けのタブ式ファイラー。Windows の [Tablacus Explorer](https://tablacus.github.io/explorer.html) のような、タブ＋ウィンドウ分割で複数フォルダを行き来できるファイラーを目指している。Finder のタブでは足りない用途向け。
+A tabbed file browser for macOS. Aims to be like Windows' [Tablacus Explorer](https://tablacus.github.io/explorer.html) — tabs plus split panes for moving between multiple folders — for cases where Finder's tabs aren't enough.
 
-## 主な機能
+[日本語版 README](README.ja.md)
 
-- タブによる複数ディレクトリの並行表示（`Cmd+T` で追加 / `Cmd+W` で閉じる）
-- ウィンドウ分割（`Cmd+D` で右に分割 / `Cmd+Shift+W` でペインを閉じる）。ペインごとに独立したタブを持つ
-- 階層ツリー表示（`NSOutlineView`、遅延展開）
-- 戻る / 進む / 上の階層へ（`Cmd+[` / `Cmd+]` / `Cmd+↑`、空白部分のダブルクリックでも上へ）
-- ダブルクリックでフォルダを開く・ファイル/アプリを起動、右クリックメニュー（開く / Finder で表示）
-- 表示中フルパスのクリップボードコピー
+## Features
 
-## 技術構成
+- Multiple directories side by side via tabs (`Cmd+T` to add / `Cmd+W` to close)
+- Split panes (`Cmd+D` to split right / `Cmd+Shift+W` to close a pane). Each pane has its own independent tabs
+- Hierarchical tree view (`NSOutlineView`, lazy expansion)
+- Back / forward / up a level (`Cmd+[` / `Cmd+]` / `Cmd+↑`, or double-click empty space to go up)
+- Double-click to open folders / launch files and apps; right-click menu (open / reveal in Finder)
+- Copy the current full path to the clipboard
 
-- SwiftUI + AppKit ハイブリッド。ツリーは `NSOutlineView` を `NSViewRepresentable` で組み込み
-- Swift Package Manager の実行ファイルターゲット。`Package.swift` を Xcode で直接開いて実行できる
-- 対象: macOS 13 以降
+## Tech Stack
 
-## ビルド・実行
+- SwiftUI + AppKit hybrid. The tree view wraps `NSOutlineView` via `NSViewRepresentable`
+- Swift Package Manager executable target. `Package.swift` can be opened and run directly in Xcode
+- Target: macOS 13+
+
+## Build & Run
 
 ```sh
 swift build
 swift run
 ```
 
-または Xcode で `Package.swift` を開いて実行する。
+Or open `Package.swift` in Xcode and run it.
 
-## 今後
+## Roadmap
 
-- アプリアイコン作成と `.app` パッケージ化（Dock 常駐用）
+- App icon and `.app` packaging (for keeping it in the Dock)
