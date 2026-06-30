@@ -18,15 +18,15 @@ let bgRect = CGRect(x: 0, y: 0, width: size, height: size)
 let bgPath = roundedRect(bgRect, radius: size * 0.2237)
 bgPath.addClip()
 let gradient = NSGradient(colors: [
-    NSColor(srgbRed: 0.36, green: 0.56, blue: 0.98, alpha: 1),
-    NSColor(srgbRed: 0.12, green: 0.34, blue: 0.85, alpha: 1)
+    NSColor(srgbRed: 0.30, green: 0.78, blue: 0.47, alpha: 1),
+    NSColor(srgbRed: 0.09, green: 0.55, blue: 0.33, alpha: 1)
 ])!
 gradient.draw(in: bgRect, angle: -90)
 
 let white = NSColor(white: 1.0, alpha: 1.0)
 let panelGray = NSColor(srgbRed: 0.90, green: 0.92, blue: 0.96, alpha: 1.0)
-let tabInactive = NSColor(srgbRed: 0.80, green: 0.84, blue: 0.90, alpha: 1.0)
-let accentBlue = NSColor(srgbRed: 0.20, green: 0.50, blue: 0.98, alpha: 1.0)
+let tabInactive = NSColor(srgbRed: 0.82, green: 0.88, blue: 0.84, alpha: 1.0)
+let accentBlue = NSColor(srgbRed: 0.13, green: 0.66, blue: 0.40, alpha: 1.0)
 
 // ウィンドウ本体（白パネル）
 let bodyRect = CGRect(x: 212, y: 230, width: 600, height: 470)
