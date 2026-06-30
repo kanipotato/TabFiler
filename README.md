@@ -1,5 +1,7 @@
 # TabFiler
 
+> **Work in progress** — actively under development, features and APIs may change.
+
 A tabbed file browser for macOS. Aims to be like Windows' [Tablacus Explorer](https://tablacus.github.io/explorer.html) — tabs plus split panes for moving between multiple folders — for cases where Finder's tabs aren't enough.
 
 [日本語版 README](README.ja.md)

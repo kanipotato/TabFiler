@@ -2,6 +2,8 @@
 
 [English README](README.md)
 
+> **開発中** — 現在も機能追加・仕様変更が継続中です。
+
 macOS 向けのタブ式ファイラー。Windows の [Tablacus Explorer](https://tablacus.github.io/explorer.html) のような、タブ＋ウィンドウ分割で複数フォルダを行き来できるファイラーを目指している。Finder のタブでは足りない用途向け。
 
 ## 主な機能
