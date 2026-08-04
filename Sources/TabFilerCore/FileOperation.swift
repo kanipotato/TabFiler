@@ -40,6 +40,18 @@ public struct FileConflictInfo: Equatable {
     }
 }
 
+/// コピー先のディレクトリ階層が異常に深くなったため安全側に倒して中断した
+/// ことを表すエラー。`isDescendant`の事前チェックをすり抜けた場合の
+/// 多重防御として`FileOperation.copyItemWithDepthGuard`が投げる。
+public struct CopyDepthLimitExceededError: LocalizedError, Equatable {
+    public let path: String
+    public let limit: Int
+
+    public var errorDescription: String? {
+        "コピー先のディレクトリ階層が深くなりすぎたため中断しました（上限\(limit)階層）。シンボリックリンク経由で自分自身の中へコピーしようとしていないか確認してください: \(path)"
+    }
+}
+
 /// 実行結果。ロールバックはしないため、「どこまで成功したか」「どこで
 /// 止まったか」を呼び出し側が正確に報告できるよう詳細に持つ。
 public struct FileOperationResult: Equatable {
@@ -93,10 +105,16 @@ public enum FileOperation {
 
     /// destinationがsource自身、またはsourceの子孫（配下）かどうか。
     /// フォルダを自分自身の中にドロップする操作を検出するために使う。
-    /// 判定は文字列比較（`candidate.path.hasPrefix(source.path + "/")`）。
+    ///
+    /// 比較の前に両方のパスを`resolvingSymlinksInPath()`で実体パスへ解決してから
+    /// 文字列比較する。シンボリックリンク経由（例: 「Aを指すリンク」をAの中や
+    /// 別の場所からAへドロップする）で自己内包チェックを迂回できてしまう問題への
+    /// 対策（詳細は`SymlinkDescendantBypassTests`を参照）。
+    /// なお`resolvingSymlinksInPath()`は対象が実在しない場合そのままのパスを返す
+    /// ため、存在しないパスでも従来どおり文字列プレフィックス比較として機能する。
     public static func isDescendant(of source: URL, candidate: URL) -> Bool {
-        let sourcePath = source.standardizedFileURL.path
-        let candidatePath = candidate.standardizedFileURL.path
+        let sourcePath = source.resolvingSymlinksInPath().standardizedFileURL.path
+        let candidatePath = candidate.resolvingSymlinksInPath().standardizedFileURL.path
         if candidatePath == sourcePath { return true }
         let sourcePrefix = sourcePath.hasSuffix("/") ? sourcePath : sourcePath + "/"
         return candidatePath.hasPrefix(sourcePrefix)
@@ -209,7 +227,7 @@ public enum FileOperation {
                 case .move:
                     try fileManager.moveItem(at: source, to: destination)
                 case .copy:
-                    try fileManager.copyItem(at: source, to: destination)
+                    try copyItemWithDepthGuard(at: source, to: destination, fileManager: fileManager)
                 }
                 result.succeeded.append(source)
             } catch {
@@ -220,6 +238,66 @@ public enum FileOperation {
         }
 
         return result
+    }
+
+    /// コピー先ディレクトリ階層がこの深さを超えたら異常事態とみなして中断する
+    /// 安全弁。主防御は`isDescendant`のシンボリックリンク解決による事前拒否だが、
+    /// 万一それをすり抜けるケース（未知の迂回経路や将来の変更によるリグレッション）
+    /// があっても、`FileManager.copyItem`が自分自身の中へ無制限に再帰コピーして
+    /// PATH_MAXに達するまでディスクを汚し続ける実害を防ぐための多重防御。
+    /// 通常の利用でここまで深いディレクトリ構造は考えにくい値として設定している。
+    public static let maxCopyDepth = 200
+
+    /// コピー時にディレクトリ階層が異常に深くならないよう見張りながら再帰的に
+    /// コピーする。`FileManager.copyItem`をディレクトリに対して1回呼ぶと、
+    /// その内部で無制限に再帰する（シンボリックリンク経由で自分自身の中へ
+    /// コピーするような異常系に入ると、対策なしではディスクを埋め尽くすか
+    /// PATH_MAXに達するまで止まらない）。
+    ///
+    /// ここでは自前でディレクトリを1階層ずつ辿り、深さが`maxCopyDepth`を
+    /// 超えたら安全側に倒して中断する。ファイル・シンボリックリンクは
+    /// （それ自体が新たな再帰の起点にならないため）`FileManager.copyItem`に
+    /// そのまま1件コピーさせる。シンボリックリンクは辿らずリンクとして
+    /// コピーする（`copyItem`のデフォルト挙動と同じ）。
+    private static func copyItemWithDepthGuard(
+        at source: URL,
+        to destination: URL,
+        fileManager: FileManager,
+        depth: Int = 0
+    ) throws {
+        let resourceValues = try source.resourceValues(forKeys: [.isSymbolicLinkKey, .isDirectoryKey])
+        let isSymlink = resourceValues.isSymbolicLink ?? false
+        let isDirectory = resourceValues.isDirectory ?? false
+
+        guard isDirectory, !isSymlink else {
+            // ファイル、またはシンボリックリンク（ディレクトリを指していても
+            // 辿らずリンクのままコピーする）。単発のコピーなので再帰は起きない。
+            try fileManager.copyItem(at: source, to: destination)
+            return
+        }
+
+        if depth >= maxCopyDepth {
+            throw CopyDepthLimitExceededError(path: destination.path, limit: maxCopyDepth)
+        }
+
+        // attributesには権限（パーミッション）のみを引き継ぐ。
+        // attributesOfItemが返す辞書をそのまま渡すと、createDirectoryが
+        // 解釈しないキー（ファイル種別等）まで含まれてしまうため絞り込む。
+        var directoryAttributes: [FileAttributeKey: Any] = [:]
+        if let permissions = (try? fileManager.attributesOfItem(atPath: source.path))?[.posixPermissions] {
+            directoryAttributes[.posixPermissions] = permissions
+        }
+        try fileManager.createDirectory(at: destination, withIntermediateDirectories: false, attributes: directoryAttributes)
+
+        let children = try fileManager.contentsOfDirectory(at: source, includingPropertiesForKeys: nil, options: [])
+        for child in children {
+            try copyItemWithDepthGuard(
+                at: child,
+                to: destination.appendingPathComponent(child.lastPathComponent),
+                fileManager: fileManager,
+                depth: depth + 1
+            )
+        }
     }
 
     private static func conflictInfo(source: URL, destination: URL, fileManager: FileManager) -> FileConflictInfo {
