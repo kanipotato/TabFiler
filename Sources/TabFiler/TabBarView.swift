@@ -1,4 +1,5 @@
 import SwiftUI
+import TabFilerCore
 
 struct TabBarView: View {
     @ObservedObject var pane: PaneModel

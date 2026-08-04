@@ -1,4 +1,5 @@
 import SwiftUI
+import TabFilerCore
 
 /// 1ペイン分のUI（タブバー＋ナビゲーションバー＋ファイルツリー）。
 /// 複数ペインをHSplitViewで並べる。
@@ -9,6 +10,9 @@ struct PaneView: View {
     var onActivate: () -> Void
     var onSplit: () -> Void
     var onClosePane: () -> Void
+    /// D&Dでファイルが移動/コピーされた後、影響を受けたフォルダ(移動元・移動先)
+    /// のURL集合を渡す。ContentView側でappState.refreshTabs(affectedBy:)へ繋ぐ。
+    var onFilesChanged: (Set<URL>) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,7 +29,8 @@ struct PaneView: View {
                 FileTreeView(
                     tab: tab,
                     onOpen: { url in open(url, in: tab) },
-                    onBackgroundDoubleClick: { tab.goUp() }
+                    onBackgroundDoubleClick: { tab.goUp() },
+                    onFilesChanged: onFilesChanged
                 )
                 .id(tab.id)
             }

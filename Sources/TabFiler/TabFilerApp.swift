@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import TabFilerCore
 
 /// SwiftPM実行ファイルにはアプリバンドルがなく、放置すると
 /// activationPolicyが正しく設定されずウィンドウが前面に出ないため、

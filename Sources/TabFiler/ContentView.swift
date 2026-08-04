@@ -1,4 +1,5 @@
 import SwiftUI
+import TabFilerCore
 
 struct ContentView: View {
     @ObservedObject var appState: AppState
@@ -12,7 +13,8 @@ struct ContentView: View {
                     canClosePane: appState.panes.count > 1,
                     onActivate: { appState.activePaneID = pane.id },
                     onSplit: { appState.splitPane() },
-                    onClosePane: { appState.closePane(pane) }
+                    onClosePane: { appState.closePane(pane) },
+                    onFilesChanged: { urls in appState.refreshTabs(affectedBy: urls) }
                 )
                 .frame(minWidth: 280)
             }
