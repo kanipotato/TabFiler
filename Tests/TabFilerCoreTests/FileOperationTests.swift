@@ -187,9 +187,9 @@ final class FileOperationTests: XCTestCase {
     }
 
     func testIsDescendantDetectsNestedPaths() {
-        let a = URL(fileURLWithPath: "/Users/kazu/A")
-        let b = URL(fileURLWithPath: "/Users/kazu/A/B")
-        let sibling = URL(fileURLWithPath: "/Users/kazu/C")
+        let a = URL(fileURLWithPath: "/Users/tester/A")
+        let b = URL(fileURLWithPath: "/Users/tester/A/B")
+        let sibling = URL(fileURLWithPath: "/Users/tester/C")
 
         XCTAssertTrue(FileOperation.isDescendant(of: a, candidate: b))
         XCTAssertTrue(FileOperation.isDescendant(of: a, candidate: a))
@@ -198,10 +198,10 @@ final class FileOperationTests: XCTestCase {
     }
 
     func testIsDescendantDoesNotFalsePositiveOnPrefixMatchingName() {
-        // "/Users/kazu/A" と "/Users/kazu/AB" は文字列としては前方一致するが、
+        // "/Users/tester/A" と "/Users/tester/AB" は文字列としては前方一致するが、
         // "AB" は "A" の配下ではないので子孫扱いしてはいけない。
-        let a = URL(fileURLWithPath: "/Users/kazu/A")
-        let ab = URL(fileURLWithPath: "/Users/kazu/AB")
+        let a = URL(fileURLWithPath: "/Users/tester/A")
+        let ab = URL(fileURLWithPath: "/Users/tester/AB")
         XCTAssertFalse(FileOperation.isDescendant(of: a, candidate: ab))
     }
 
