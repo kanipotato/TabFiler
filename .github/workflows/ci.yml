@@ -1,0 +1,29 @@
+name: CI
+
+# テストは Swift Package Manager の `swift test` のみ。macOS 13+ 向けの
+# AppKit/SwiftUI アプリなので macOS ランナーを使う。
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+# 同じブランチへ続けて push したときは古い実行を打ち切る（無駄な実行時間を使わない）。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: swift test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift バージョン
+        run: swift --version
+
+      - name: ビルド
+        run: swift build
+
+      - name: テスト
+        run: swift test
